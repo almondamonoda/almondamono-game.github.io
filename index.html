@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数当てゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .game-info {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+            text-align: left;
+        }
+        .game-info p {
+            color: #333;
+            margin: 5px 0;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: bold;
+        }
+        button:hover {
+            transform: scale(1.02);
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            min-height: 30px;
+        }
+        .result-correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        .result-hint {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+        .result-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        .stat-item {
+            display: inline-block;
+            margin: 0 15px;
+            color: #333;
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .reset-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            font-size: 1em;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .reset-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 数当てゲーム</h1>
+        <p class="subtitle">1〜100の数字を当ててみよう！</p>
+        
+        <div class="game-info">
+            <p><strong>ルール:</strong></p>
+            <p>・コンピュータが1〜100の数字を選びました</p>
+            <p>・その数字を当ててください</p>
+            <p>・ヒントが表示されます</p>
+        </div>
+
+        <div class="input-group">
+            <input type="number" id="guessInput" placeholder="数字を入力してください" min="1" max="100" />
+            <button id="guessButton">予測する</button>
+        </div>
+
+        <div id="result"></div>
+
+        <div class="stats">
+            <div class="stat-item">
+                試行回数: <span class="stat-value" id="attempts">0</span>
+            </div>
+        </div>
+
+        <button class="reset-btn" id="resetButton">ゲームをリセット</button>
+    </div>
+
+    <script>
+        let randomNumber = Math.floor(Math.random() * 100) + 1;
+        let attempts = 0;
+        let gameOver = false;
+
+        const guessInput = document.getElementById('guessInput');
+        const guessButton = document.getElementById('guessButton');
+        const resultDiv = document.getElementById('result');
+        const attemptsSpan = document.getElementById('attempts');
+        const resetButton = document.getElementById('resetButton');
+
+        guessButton.addEventListener('click', makeGuess);
+        guessInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') makeGuess();
+        });
+        resetButton.addEventListener('click', resetGame);
+
+        function makeGuess() {
+            if (gameOver) return;
+
+            const userGuess = parseInt(guessInput.value);
+
+            if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
+                showResult('1〜100の数字を入力してください！', 'result-error');
+                return;
+            }
+
+            attempts++;
+            attemptsSpan.textContent = attempts;
+
+            if (userGuess === randomNumber) {
+                showResult(`🎉 正解です！${attempts}回で当てました！`, 'result-correct');
+                gameOver = true;
+                guessButton.disabled = true;
+            } else if (userGuess < randomNumber) {
+                showResult(`📈 もっと大きい数字です！`, 'result-hint');
+            } else {
+                showResult(`📉 もっと小さい数字です！`, 'result-hint');
+            }
+
+            guessInput.value = '';
+            guessInput.focus();
+        }
+
+        function showResult(message, className) {
+            resultDiv.textContent = message;
+            resultDiv.className = className;
+        }
+
+        function resetGame() {
+            randomNumber = Math.floor(Math.random() * 100) + 1;
+            attempts = 0;
+            gameOver = false;
+            guessInput.value = '';
+            attemptsSpan.textContent = '0';
+            resultDiv.textContent = '';
+            resultDiv.className = '';
+            guessButton.disabled = false;
+            guessInput.focus();
+        }
+
+        guessInput.focus();
+    </script>
+</body>
+</html>
